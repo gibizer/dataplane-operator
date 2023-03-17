@@ -21,6 +21,8 @@ import (
 	"fmt"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
+	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
@@ -44,6 +46,14 @@ func DeployNovaExternalCompute(ctx context.Context, helper *helper.Helper, obj c
 		},
 	}
 
+	log.Info("!!!before scheme.Default(novaExternalCompute) ", "novaExternalCompute", novaExternalCompute)
+
+	scheme := runtime.NewScheme()
+	utilruntime.Must(novav1beta1.AddToScheme(scheme))
+	scheme.Default(novaExternalCompute)
+
+	log.Info("!!!before CreateOrPatch", "novaExternalCompute", novaExternalCompute)
+
 	_, err := controllerutil.CreateOrPatch(ctx, helper.GetClient(), novaExternalCompute, func() error {
 		if novaExternalCompute.ObjectMeta.Labels == nil {
 			novaExternalCompute.ObjectMeta.Labels = make(map[string]string)
@@ -61,6 +71,8 @@ func DeployNovaExternalCompute(ctx context.Context, helper *helper.Helper, obj c
 		if err != nil {
 			return err
 		}
+
+		log.Info("!!!returning from CreateOrPatch", "novaExternalCompute", novaExternalCompute)
 
 		return nil
 	})
